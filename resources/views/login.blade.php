@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskFlow - Register</title>
+    <title>TaskFlow - Login</title>
     <style>
         * {
             margin: 0;
@@ -44,17 +44,17 @@
         }
 
         .login-btn {
+            background-color: #0487FF;
+            color: white;
+        }
+
+        .register-btn {
             background-color: white;
             color: #0487FF;
             border: 1px solid #0487FF !important;
         }
 
-        .register-btn {
-            background-color: #0487FF;
-            color: white;
-        }
-
-        .register-container {
+        .login-container {
             max-width: 800px;
             margin: 80px auto;
             padding: 3rem;
@@ -70,7 +70,7 @@
             font-size: 18px;
         }
 
-        .register-title {
+        .login-title {
             color: #0487FF;
             font-size: 32px;
             margin-bottom: 30px;
@@ -97,19 +97,7 @@
             margin-top: 5px;
         }
 
-        .terms-text {
-            text-align: center;
-            font-size: 16px;
-            margin: 30px 0;
-            line-height: 1.5;
-        }
-
-        .terms-text a {
-            color: #0487FF;
-            text-decoration: none;
-        }
-
-        .register-submit {
+        .login-submit {
             width: 100%;
             padding: 15px;
             background-color: #0487FF;
@@ -121,18 +109,47 @@
             transition: background-color 0.3s;
         }
 
-        .register-submit:hover {
+        .login-submit:hover {
             background-color: #0371db;
         }
 
-        .ketentuan {
+        .forgot-password {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .forgot-password a {
+            color: #0487FF;
+            text-decoration: none;
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .terms-text {
             text-align: center;
             font-size: 16px;
             margin: 30px 0;
             line-height: 1.5;
         }
 
-        .ketentuan a {
+        .terms-text a {
             color: #0487FF;
             text-decoration: none;
         }
@@ -147,33 +164,69 @@
         </div>
     </nav>
 
-    <div class="register-container">
-        <p class="welcome-text">Welcome to TaskFlow</p>
-        <h1 class="register-title">Register to Continue</h1>
+    <div class="login-container">
+        <p class="welcome-text">Welcome back to TaskFlow</p>
+        <h1 class="login-title">Login to Continue</h1>
         
-        <form method="POST" action="{{ route('register') }}">
-            @csrf
-            <input type="text" name="name" class="input-field" placeholder="Username" value="{{ old('name') }}" required>
-            @error('name')
-                <div class="error-message">{{ $message }}</div>
-            @enderror
+        @if(session('error'))
+            <div class="alert alert-danger">
+                {{ session('error') }}
+            </div>
+        @endif
 
-            <input type="email" name="email" class="input-field" placeholder="Alamat email@gmail.com" value="{{ old('email') }}" required>
+        @if(session('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="alert alert-danger">
+                @foreach($errors->all() as $error)
+                    {{ $error }}
+                @endforeach
+            </div>
+        @endif
+        
+        <form method="POST" action="{{ route('login') }}">
+            @csrf
+            <input type="email" name="email" class="input-field" placeholder="Email" value="{{ old('email') }}" required autofocus>
             @error('email')
                 <div class="error-message">{{ $message }}</div>
             @enderror
 
-            <input type="password" name="password" class="input-field" placeholder="Masukkan Password" required>
+            <input type="password" name="password" class="input-field" placeholder="Password" required>
             @error('password')
                 <div class="error-message">{{ $message }}</div>
             @enderror
+            
+            <p class="terms-text">
+                Dengan melanjutkan, <a href="#">Anda menyetujui</a> kami<br>
+                <a href="#">Syarat & Kebijakan</a> Privasi
+            </p>
 
-            <input type="password" name="password_confirmation" class="input-field" placeholder="Konfirmasi Password" required>
+            <button type="submit" class="login-submit">Login</button>
 
-            <p class="ketentuan">Dengan melanjutkan, Anda menyetujui kami <a href="#">Syarat & Kebijakan Privasi</a></p>
-
-            <button type="submit" class="register-submit">Register</button>
+            <div class="forgot-password">
+                <a href="#">Forgot Password?</a>
+            </div>
         </form>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            
+            form.addEventListener('submit', function(e) {
+                const email = form.querySelector('input[name="email"]').value;
+                const password = form.querySelector('input[name="password"]').value;
+                
+                if (!email || !password) {
+                    e.preventDefault();
+                    alert('Please fill in all fields');
+                }
+            });
+        });
+    </script>
 </body>
-</html>
+</html> 

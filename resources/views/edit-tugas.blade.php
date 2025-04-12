@@ -1,46 +1,59 @@
 @extends('layouts.app')
 
-@section('title', 'Tambah Tugas')
+@section('title', 'Edit Tugas')
 
 @section('content')
 <div class="form-container">
-    <h2 class="form-title">Tambah Tugas Baru</h2>
-    <form action="{{ route('tasks.store') }}" method="POST">
+    <h2 class="form-title">Edit Tugas</h2>
+    <form action="{{ route('tasks.update', $task->id) }}" method="POST">
         @csrf
+        @method('PUT')
         <div class="form-group">
             <label>Judul</label>
-            <input type="text" name="title" class="form-control" placeholder="Masukkan judul tugas" required>
+            <input type="text" name="title" class="form-control" value="{{ $task->title }}" required>
         </div>
 
         <div class="form-group">
             <label>Tenggat Waktu</label>
-            <input type="date" name="due_date" class="form-control" required>
+            <input type="date" name="due_date" class="form-control" value="{{ $task->due_date->format('Y-m-d') }}" required>
         </div>
 
         <div class="form-group">
             <label>Priority</label>
             <div class="radio-group">
                 <div class="radio-item">
-                    <input type="radio" name="priority" id="high" value="high" required>
+                    <input type="radio" name="priority" id="high" value="high" {{ $task->priority === 'high' ? 'checked' : '' }} required>
                     <label for="high" class="priority-high">High</label>
                 </div>
                 <div class="radio-item">
-                    <input type="radio" name="priority" id="medium" value="medium" checked>
+                    <input type="radio" name="priority" id="medium" value="medium" {{ $task->priority === 'medium' ? 'checked' : '' }}>
                     <label for="medium" class="priority-medium">Medium</label>
                 </div>
                 <div class="radio-item">
-                    <input type="radio" name="priority" id="low" value="low">
+                    <input type="radio" name="priority" id="low" value="low" {{ $task->priority === 'low' ? 'checked' : '' }}>
                     <label for="low" class="priority-low">Low</label>
                 </div>
             </div>
         </div>
 
         <div class="form-group">
-            <label>Task Description</label>
-            <textarea name="description" class="form-control" placeholder="Masukkan deskripsi tugas"></textarea>
+            <label>Deskripsi</label>
+            <textarea name="description" class="form-control">{{ $task->description }}</textarea>
         </div>
 
-        <button type="submit" class="btn-submit">Simpan</button>
+        <div class="form-group">
+            <label>Status</label>
+            <select name="status" class="form-control">
+                <option value="process" {{ $task->status === 'process' ? 'selected' : '' }}>Dalam Proses</option>
+                <option value="done" {{ $task->status === 'done' ? 'selected' : '' }}>Selesai</option>
+                <option value="delay" {{ $task->status === 'delay' ? 'selected' : '' }}>Terlambat</option>
+            </select>
+        </div>
+
+        <div class="form-actions">
+            <a href="{{ route('tugas') }}" class="btn-cancel">Batal</a>
+            <button type="submit" class="btn-submit">Simpan Perubahan</button>
+        </div>
     </form>
 </div>
 @endsection
@@ -74,12 +87,11 @@
         margin-bottom: 0.5rem;
         color: #333;
         font-weight: 500;
-        width: fit-content;
     }
 
     .form-control {
         width: 100%;
-        padding: 1rem;
+        padding: 0.8rem;
         border: 2px solid #87CEEB;
         border-radius: 5px;
         font-size: 1rem;
@@ -103,46 +115,43 @@
         gap: 0.5rem;
     }
 
-    .radio-item label {
-        border-bottom: none;
-        padding-bottom: 0;
+    textarea.form-control {
+        min-height: 200px;
+        resize: vertical;
     }
 
-    /* Status colors */
-    .status-delay { 
-        color: #FF4444; 
-    }
-    .status-delay::before { 
-        content: "•";
-        color: #FF4444;
-        margin-right: 8px;
-        font-size: 24px;
-        line-height: 0;
-        vertical-align: middle;
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 2rem;
     }
 
-    .status-process { 
-        color: #FFA500; 
-    }
-    .status-process::before { 
-        content: "•";
-        color: #FFA500;
-        margin-right: 8px;
-        font-size: 24px;
-        line-height: 0;
-        vertical-align: middle;
+    .btn-cancel {
+        background-color: #ddd;
+        color: #666;
+        padding: 0.8rem 2rem;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+        text-decoration: none;
+        text-align: center;
     }
 
-    .status-done { 
-        color: #4CAF50; 
+    .btn-submit {
+        background-color: #0487FF;
+        color: white;
+        padding: 0.8rem 2rem;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.3s;
     }
-    .status-done::before { 
-        content: "•";
-        color: #4CAF50;
-        margin-right: 8px;
-        font-size: 24px;
-        line-height: 0;
-        vertical-align: middle;
+
+    .btn-submit:hover {
+        background-color: #0376e0;
     }
 
     /* Priority colors */
@@ -180,26 +189,6 @@
         font-size: 24px;
         line-height: 0;
         vertical-align: middle;
-    }
-
-    textarea.form-control {
-        min-height: 200px;
-        resize: vertical;
-    }
-
-    .btn-submit {
-        background-color: #FF4444;
-        color: white;
-        padding: 0.8rem 2rem;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 1rem;
-        transition: background-color 0.3s;
-    }
-
-    .btn-submit:hover {
-        background-color: #ff2929;
     }
 </style>
 @endpush 

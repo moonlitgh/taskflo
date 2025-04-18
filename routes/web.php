@@ -5,12 +5,45 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\SettingsController;
+// Add back the calendar controller import
+use App\Http\Controllers\CalendarController;
 
+// Make the home page the main route with auth check
 Route::get('/', function () {
-    return view('welcome');
-});
+    if (Auth::check()) {
+        // Get the calendar data for the home page
+        $user = Auth::user();
+        $tasks = \App\Models\Task::where('user_id', Auth::id())->get();
+        
+        // Calculate task statistics
+        $totalTasks = $tasks->count();
+        $doneTasks = $tasks->where('is_completed', true)->count();
+        $delayTasks = $tasks->where('is_completed', false)
+            ->where('due_date', '<', now()->format('Y-m-d'))
+            ->count();
+        
+        // Group tasks by date for the calendar
+        $tasksByDate = [];
+        foreach ($tasks as $task) {
+            if ($task->due_date) {
+                $date = $task->due_date instanceof \DateTime 
+                    ? $task->due_date->format('Y-m-d')
+                    : date('Y-m-d', strtotime($task->due_date));
+                    
+                if (!isset($tasksByDate[$date])) {
+                    $tasksByDate[$date] = [];
+                }
+                $tasksByDate[$date][] = $task;
+            }
+        }
+        
+        return view('home', compact('user', 'totalTasks', 'doneTasks', 'delayTasks', 'tasksByDate'));
+    } else {
+        return redirect()->route('login');
+    }
+})->name('root');
 
-// Authentication Routes
+// Authentication Routes remain the same
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
@@ -19,13 +52,31 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Protected Routes
 Route::middleware(['auth'])->group(function () {
+    // Update the home route to include calendar data
     Route::get('/home', function () {
         $user = Auth::user();
-        $totalTasks = 0; // Ini akan diupdate nanti setelah kita membuat model Task
+        $tasks = \App\Models\Task::where('user_id', Auth::id())->get();
+        
+        // Group tasks by date for the calendar
+        $tasksByDate = [];
+        foreach ($tasks as $task) {
+            if ($task->due_date) {
+                $date = $task->due_date instanceof \DateTime 
+                    ? $task->due_date->format('Y-m-d')
+                    : date('Y-m-d', strtotime($task->due_date));
+                    
+                if (!isset($tasksByDate[$date])) {
+                    $tasksByDate[$date] = [];
+                }
+                $tasksByDate[$date][] = $task;
+            }
+        }
+        
+        $totalTasks = 0;
         $doneTasks = 0;
         $delayTasks = 0;
         
-        return view('home', compact('user', 'totalTasks', 'doneTasks', 'delayTasks'));
+        return view('home', compact('user', 'totalTasks', 'doneTasks', 'delayTasks', 'tasksByDate'));
     })->name('home');
 
     // Task routes
@@ -52,4 +103,7 @@ Route::middleware(['auth'])->group(function () {
         $user = Auth::user();
         return view('help', compact('user'));
     })->name('help');
+
+    // Add back the calendar routes
+    Route::get('/calendar/tasks', [CalendarController::class, 'getTasksByDate'])->name('calendar.tasks');
 });

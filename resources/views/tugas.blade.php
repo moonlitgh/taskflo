@@ -3,6 +3,8 @@
 @section('title', 'Tugas')
 
 @section('content')
+<!-- Add this meta tag right after the content section starts -->
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <div class="tasks-container">
     <h2 class="tasks-title">Daftar Tugas</h2>
     
@@ -31,7 +33,10 @@
     <div class="tasks-list-container">
         <div class="tasks-list" id="tasks-list">
             @foreach($tasks as $task)
-            <div class="task-card" data-status="{{ $task->status }}" data-priority="{{ $task->priority }}">
+            <div class="task-card" 
+                 data-status="{{ $task->status }}" 
+                 data-priority="{{ $task->priority }}"
+                 data-task-id="{{ $task->id }}">
                 <div class="task-header">
                     <div class="task-checkbox">
                         <input type="checkbox" 
@@ -527,7 +532,7 @@
         const closeButton = modal.querySelector('.close-modal');
         const cancelButton = modal.querySelector('.btn-cancel');
         const editForm = document.getElementById('editTaskForm');
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
         // Add event listener for status checkboxes
         document.querySelectorAll('.task-status-checkbox').forEach(checkbox => {
@@ -537,30 +542,37 @@
                 const status = isChecked ? 'done' : 'process';
                 
                 fetch(`/tasks/${taskId}/status`, {
-                    method: 'PUT',
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
                     },
-                    body: JSON.stringify({ status })
+                    body: JSON.stringify({ 
+                        _method: 'PUT',
+                        status: status 
+                    })
                 })
-                .then(response => {
-                    if (response.ok) {
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
                         const taskCard = this.closest('.task-card');
                         taskCard.setAttribute('data-status', status);
                         
-                        // Update status text
                         const statusSpan = taskCard.querySelector('.task-status');
                         statusSpan.textContent = status.charAt(0).toUpperCase() + status.slice(1);
                         statusSpan.className = `task-status status-${status}`;
                         
-                        // Refresh filters
                         filterTasks();
+                    } else {
+                        throw new Error(data.message || 'Failed to update status');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     alert('Failed to update task status');
+                    // Revert checkbox state
+                    this.checked = !isChecked;
                 });
             });
         });
@@ -678,22 +690,40 @@
             }
         }
 
+        // Update delete handler
         function handleDeleteTask(taskId) {
             if (confirm('Are you sure you want to delete this task?')) {
                 fetch(`/tasks/${taskId}`, {
-                    method: 'DELETE',
+                    method: 'POST',
                     headers: {
-                        'X-CSRF-TOKEN': csrfToken
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        _method: 'DELETE'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const taskCard = document.querySelector(`.task-card[data-task-id="${taskId}"]`);
+                        if (taskCard) {
+                            taskCard.remove();
+                            filterTasks();
+                        }
+                    } else {
+                        throw new Error(data.message || 'Failed to delete task');
                     }
                 })
-                .then(response => {
-                    if (response.ok) {
-                        window.location.reload();
-                    }
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to delete task');
                 });
             }
         }
 
+        // Update edit form submission
         editForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -712,15 +742,10 @@
 
                 const data = await response.json();
                 
-                if (response.ok && data.success) {
+                if (data.success) {
                     window.location.reload();
                 } else {
-                    if (data.messages) {
-                        const errorMessages = Object.values(data.messages).flat().join('\n');
-                        alert(errorMessages);
-                    } else {
-                        throw new Error(data.error || 'Failed to save changes');
-                    }
+                    throw new Error(data.message || 'Failed to update task');
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -729,4 +754,4 @@
         });
     });
 </script>
-@endpush 
+@endpush

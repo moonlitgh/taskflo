@@ -1,49 +1,28 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard')
+@section('title', 'Calendar')
 
 @section('content')
-<div class="dashboard-container">
-    <h1>Dashboard</h1>
-    
-    <!-- Stats Section -->
-    <div class="stats-container">
-        <div class="stat-card">
-            <h3>Total Tasks</h3>
-            <p>{{ $totalTasks }}</p>
-        </div>
-        <div class="stat-card">
-            <h3>Completed Tasks</h3>
-            <p>{{ $doneTasks }}</p>
-        </div>
-        <div class="stat-card">
-            <h3>Delayed Tasks</h3>
-            <p>{{ $delayTasks }}</p>
-        </div>
-    </div>
-    
-    <!-- Calendar Section -->
-    <div class="calendar-container">
-        <h2>Task Calendar</h2>
-        <div id="calendar"></div>
-    </div>
-    
-    <!-- Task Modal -->
-    <div class="modal" id="taskModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Tasks for <span id="selectedDate"></span></h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body" id="taskList">
-                    <!-- Tasks will be loaded here -->
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                </div>
+<div class="calendar-container">
+    <h1>Task Calendar</h1>
+    <div id="calendar"></div>
+</div>
+
+<!-- Task Modal -->
+<div class="modal" id="taskModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tasks for <span id="selectedDate"></span></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="taskList">
+                <!-- Tasks will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -53,40 +32,11 @@
 @push('styles')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css">
 <style>
-    .dashboard-container {
-        padding: 20px;
-    }
-    
-    .stats-container {
-        display: flex;
-        gap: 20px;
-        margin-bottom: 2rem;
-    }
-
-    .stat-card {
-        flex: 1;
-        background-color: #87CEEB;
-        padding: 1.5rem;
-        border-radius: 10px;
-        color: white;
-    }
-
-    .stat-card h3 {
-        margin-bottom: 10px;
-        font-size: 1.2rem;
-    }
-
-    .stat-card p {
-        font-size: 2rem;
-        font-weight: bold;
-    }
-    
     .calendar-container {
         background-color: white;
         padding: 20px;
         border-radius: 10px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        margin-top: 20px;
     }
     
     #calendar {

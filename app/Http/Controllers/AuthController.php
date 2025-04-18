@@ -42,8 +42,8 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
+            'email' => ['required', 'email'],
+            'password' => ['required'],
         ]);
 
         if (Auth::attempt($credentials)) {
@@ -53,7 +53,7 @@ class AuthController extends Controller
 
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',
-        ])->onlyInput('email');
+        ])->withInput();
     }
 
     public function logout(Request $request)
@@ -63,4 +63,4 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
         return redirect()->route('login')->with('success', 'Anda telah berhasil logout.');
     }
-} 
+}

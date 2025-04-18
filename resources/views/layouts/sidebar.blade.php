@@ -44,16 +44,7 @@
                 Help
             </a>
         </div>
-    </div>
-
-    <div class="menu-item logout-item">
-        <form id="logout-form" method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit" class="logout-button">
-                <i class="icon">🚪</i>
-                Logout
-            </button>
-        </form>
+        <!-- Calendar menu item removed -->
     </div>
 </div>
 
@@ -116,4 +107,4 @@
         });
     });
 </script>
-@endpush 
+@endpush

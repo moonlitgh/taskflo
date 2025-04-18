@@ -145,3 +145,9 @@
     </div>
 </body>
 </html>
+
+<!-- Check the form action in your welcome.blade.php -->
+<form method="POST" action="{{ route('login') }}">
+    @csrf
+    <!-- Your login form fields -->
+</form>

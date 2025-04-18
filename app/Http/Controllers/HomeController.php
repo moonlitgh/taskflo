@@ -4,65 +4,56 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Task;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class HomeController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
-        if (!Auth::check()) {
-            return redirect()->route('login');
-        }
+        $userId = Auth::id();
+        
+        // Debug user info
+        Log::info('Current User:', ['user_id' => $userId]);
 
-        $user = Auth::user();
-        $totalTasks = Task::where('user_id', $user->id)->count();
-        $doneTasks = Task::where('user_id', $user->id)->where('status', 'done')->count();
-        $delayTasks = Task::where('user_id', $user->id)->where('status', 'delay')->count();
+        // Get all tasks for current user
+        $tasks = Task::where('user_id', $userId)
+                    ->whereNotNull('due_date')
+                    ->get()
+                    ->map(function ($task) {
+                        return [
+                            'id' => $task->id,
+                            'title' => $task->title,
+                            'description' => $task->description,
+                            'date' => $task->due_date->format('Y-m-d'),
+                            'status' => $task->status,
+                            'priority' => $task->priority,
+                            'is_completed' => (bool)$task->is_completed
+                        ];
+                    });
 
-        // Fetch tasks for the calendar
-        $tasks = Task::where('user_id', $user->id)
-                     ->whereIn('status', ['delay', 'process', 'done']) // Show delayed, process, and done tasks
-                     ->select('id', 'title', 'description', 'due_date', 'status', 'priority') // Added id for logging
-                     ->get();
+        // Debug tasks
+        Log::info('Tasks found:', [
+            'count' => $tasks->count(),
+            'tasks' => $tasks->toArray()
+        ]);
 
-        // Log raw tasks fetched from DB
-        Log::info('Raw tasks fetched from DB:', $tasks->toArray()); 
-
-        // Format tasks for the calendar
-        $calendarTasks = $tasks->map(function ($task) {
-            // Convert the date to YYYY-MM-DD format
-            $formattedDate = optional($task->due_date)->toDateString(); // Use optional() for safety
-            
-            Log::info('Task date check:', [
-                'task_id' => $task->id ?? 'N/A', 
-                'original_date' => $task->due_date,
-                'formatted_date' => $formattedDate,
-                'status' => $task->status // Log status
-            ]);
-            
-            // Skip tasks without a valid date
-            if (!$formattedDate) {
-                return null;
-            }
-
-            return [
-                'title' => $task->title,
-                'description' => $task->description,
-                'date' => $formattedDate,
-                'status' => $task->status,
-                'priority' => $task->priority
-            ];
-        })->filter()->values()->toArray(); // Add filter() to remove nulls and values() to reindex
-
-        // Debug log
-        Log::info('Final Calendar Tasks (after formatting):', $calendarTasks);
+        // Calculate statistics
+        $totalTasks = $tasks->count();
+        $doneTasks = $tasks->where('status', 'done')->count();
+        $delayTasks = $tasks->where('status', 'delay')->count();
 
         return view('home', [
+            'tasks' => $tasks,
             'totalTasks' => $totalTasks,
             'doneTasks' => $doneTasks,
-            'delayTasks' => $delayTasks,
-            'tasks' => $calendarTasks
+            'delayTasks' => $delayTasks
         ]);
     }
-} 
+}
